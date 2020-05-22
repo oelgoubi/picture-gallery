@@ -1,0 +1,190 @@
+# App challengs 
+
+Need to get a search term from the user 
+
+Need to use that search term to make a request 
+to an outside API and fetch Data 
+
+Need to take the fetched images and shwo them
+on the screen in a list 
+
+
+### Break the APP into Components
+
+
+        Index.js ( ReactDom.render(<App/>,doc.getelbyID('root')))
+             |
+         APP Compo 
+    |                |
+SearchBar        ImageList
+
+
+### Event Handlers
+
+USER changes text Input --> onChange
+UserClicks on something --> onClick
+User sumbits a form ---> onSumbit
+
+
+# Controlled vs uncontrolled Elements
+
+input  : onChange = { e => this.setState({ term :e.target.value}) value={this.state.term}}
+
+ Controlled Element FLOW :
+
+ User types input => callback method gets invoked onChange
+ --> we call the state with the new value 
+ ---> component renders
+ --> input is told what its value is (coming from state)
+
+ What's the value of the input right now ? at any moment 
+ --> Centralize the data in our React Component
+
+ React World                 DOM world
+
+ state={term:'hi'}         <input value="hi" > 
+
+ # Handling form Submittal
+ the browsers attempt to sumbit the form to a backend server 
+ -> Disable the default behaviour
+
+ # this in JS :
+
+err : Connot read property 'state' of undefined  ?
+undefined.state --> this is undefined 
+
+inside of each a instance of a class we have a this variable 
+which a reference to the instance  itself to access the varibale 
+and methods of the class
+
+# hOW the value of this is determined  
+class Car{
+    setDriveSound(sound){
+        this.sound = sound;
+    }
+    drive(){
+        return this.sound;
+    }
+}
+
+const car = new Car();
+
+car.setDriveSound('vrom');
+car.drive(); // When we call the method 
+// we check the object on the left of the . , it's what defines the 'this' varibale
+
+# solving the issue of 'this'
+
+- M1 :   bind() method
+
+constructor(props){
+        super(props);
+
+        this.state={ value:''};
+        this.onFormSubmit = this.onFormSubmit.bind(this); // produce or override the method and pass the right 'this' keyword
+        this.onInputChange = this.onInputChange.bind(this);
+    }
+
+onInputChange (e){ this.setState({value: e.target.value}); };
+
+- M2 : Arrow function
+
+- M3 : inline anonymous  callback  function 
+onChange = {(e)=> this.onFormSubmit(e)}
+
+# Communicating Child to Parent
+
+Props go donw ! from the parent to child
+
+#data from a child to a parent :
+we create an arrow function in the parent and we send it to the child using props 
+then the child invoke it and pass the data in parameter ! at that moment we get the Data 
+
+# Fetchig Data : network / ajax request 
+Unsplash API .
+
+
+                          |----> ajax Req ----> |
+React App --> Ajax Client |                     | Unplash API
+                          |<------- Pics Json---|
+
+Ajax Client : managing network Requests we use two main packages
+
+axios --> 3rd party package (separé) --> (axios amazing)
+fetch --> function built into modern browsers  (more lower simple method )
+
+# npm install --save axios
+# FIND the absolute URL : schema location
+
+cors : cross origin research sharing request 
+
+# 2 ways to handle ajax Requests
+-------------------Promises (then , catch)
+axios
+  .get('https://api.unsplash.com/search/photos',{
+    params:{ query:term},
+    headers: {
+      Authorization: `Client-ID ${AuthKey}` 
+    }
+  })
+  .then(res => { 
+    // handle success
+    console.log(res.data.results[0].urls);
+  })
+  .catch(function (error) {
+    // handle error
+    console.log(error);
+  })
+
+
+--------------- async and await 
+ onSearchSubmit = async (term) => {
+    const response = await unsplash.get('/search/photos', 
+    {
+      params: { query: term }
+    });
+ 
+    this.setState({ images: response.data.results })
+  }
+
+-------------------- Key in a list of items React ---> Performance and FAST reactivity 
+React check the items using the key and update or render the component that don't exist in the 
+UI instead of re-rendering all the items of the list
+
+# USE of Grid System to Style the pictures
+
+div-wrapper{ # ROOT div
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(250px,1fr));
+    grid-gap:10px;  //MARGIN
+    grid-auto-rows: 150px; // THE height of the cells 
+}
+div-wrapper img{
+    width:250px;
+    grid-row-end: span 3; // Each grid takes 3 cells
+}
+
+
+# Problem : grid-row-end: span 3; // Each grid takes 3 cells
+we should secify the grid span of the image depending on its height
+
+Solution : Use a ImageCard Component that display a single image 
+and once it renders we access the DOM and we take the height of the image 
+and based on its value we update grid-auto-rows
+
+Steps of the V2 implementation ------------
+Let the ImageCard render itself and its image 
+Reach into the DOM and figure out the height of the image 
+Set the image height on state to get the component to rerender 
+when rerendering , assign a 'grid-row-end' to make sure the image takes up
+the appropriate space 
+
+Vanilla JS : height determination
+document.querySelector('img').clientHeight; --> 321
+ 
+
+################## TO access the DOM elements using React we use Refs (reference) System
+It gives access to a single DOM element 
+we create refs in the constructor, assign them to instance variables , then pass to a particular
+JSX element as props
+
